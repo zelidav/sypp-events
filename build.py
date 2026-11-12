@@ -4,7 +4,7 @@ import pathlib, re
 
 OPERATOR = "SYPP Cloud Bar"
 CONTACT_EMAIL = "info@syppit.com"
-SMS_NUMBER = ""          # fill in once the Twilio number is bought, e.g. "(212) 555-0100"
+SMS_NUMBER = "(562) 4-SYPPIT, (562) 479-7748"
 PROGRAM = "SYPP Cloud Bar Event Updates"
 UPDATED = "November 12, 2026"
 BOOK_ENDPOINT = ""       # set to the Cloud Run booking endpoint when it ships
