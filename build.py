@@ -8,6 +8,8 @@ SMS_NUMBER = "(562) 4-SYPPIT, (562) 479-7748"
 PROGRAM = "SYPP Cloud Bar Event Updates"
 UPDATED = "November 12, 2026"
 BOOK_ENDPOINT = ""       # set to the Cloud Run booking endpoint when it ships
+API_BASE = "https://sypp-phone-avkv2gqima-ue.a.run.app"            # booking API base, no trailing slash, e.g. https://sypp-phone-avkv2gqima-ue.a.run.app
+                         # (book.html uses /api/public/brands, /api/public/stores, /api/book). Empty = email fallback.
 
 NAV = [("index.html", "Events"), ("book.html", "Book an event"), ("sms-terms.html", "Text messages"),
        ("privacy.html", "Privacy"), ("terms.html", "Terms")]
@@ -17,7 +19,8 @@ def page(fname, title, body):
     sms_line = SMS_NUMBER or "our events line (shown on every text we send)"
     body = (body.replace("{{OPERATOR}}", OPERATOR).replace("{{EMAIL}}", CONTACT_EMAIL)
                 .replace("{{PROGRAM}}", PROGRAM).replace("{{UPDATED}}", UPDATED)
-                .replace("{{SMS_NUMBER}}", sms_line).replace("{{BOOK_ENDPOINT}}", BOOK_ENDPOINT))
+                .replace("{{SMS_NUMBER}}", sms_line).replace("{{BOOK_ENDPOINT}}", BOOK_ENDPOINT)
+                .replace("{{API_BASE}}", API_BASE))
     return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>{title}</title>
