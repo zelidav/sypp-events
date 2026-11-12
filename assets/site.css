@@ -1,0 +1,48 @@
+/* SYPP Cloud Bar events site. Palette pulled from syppit.com: purple, coral, sky. */
+:root{
+  --bg:#fbfaff; --panel:#ffffff; --ink:#1f1830; --muted:#5e5772; --line:#e4e0ee;
+  --purple:#855fa4; --coral:#fb4848; --sky:#c7f5fa; --blue:#4862ea;
+  --display:"Outfit",ui-sans-serif,system-ui,sans-serif;
+  --body:"Figtree",ui-sans-serif,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#15111d; --panel:#1e1829; --ink:#f0ecf8; --muted:#b2aac6; --line:#352c45;
+  --purple:#b994d8; --coral:#ff7a7a; --sky:#1d3a3e; --blue:#8b9cff; color-scheme:dark}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6}
+a{color:var(--blue)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--purple);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px))}
+header.top{border-bottom:1px solid var(--line);background:var(--panel)}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:14px;flex-wrap:wrap}
+header.top img{height:40px;width:auto;display:block}
+@media (prefers-color-scheme:dark){header.top img{background:#fff;border-radius:8px;padding:4px 8px}}
+nav.links{display:flex;gap:16px;flex-wrap:wrap;font-size:14px}
+nav.links a{color:var(--muted);text-decoration:none;font-weight:500}
+nav.links a[aria-current="page"]{color:var(--ink)}
+main{padding-block:36px 56px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(28px,5vw,40px);line-height:1.15;margin:0 0 12px;text-wrap:balance}
+h2{font-family:var(--display);font-weight:600;font-size:21px;margin:32px 0 8px}
+h3{font-family:var(--display);font-weight:600;font-size:17px;margin:22px 0 6px}
+p,li{max-width:65ch}
+.lede{font-size:18px;color:var(--muted)}
+.updated{color:var(--muted);font-size:14px}
+.band{background:var(--sky);border-radius:14px;padding:18px 20px;margin:24px 0}
+.cta{display:inline-block;background:var(--coral);color:#fff;text-decoration:none;font-weight:600;border-radius:10px;padding:11px 20px;border:0;font:inherit;font-weight:600;cursor:pointer}
+.cta:disabled{opacity:.5;cursor:not-allowed}
+form.book{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}
+form.book label{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600}
+form.book .full{grid-column:1/-1}
+input,select,textarea{font:inherit;font-weight:400;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:9px 11px;width:100%}
+textarea{min-height:90px}
+.consent{grid-column:1/-1;display:flex!important;flex-direction:row!important;gap:10px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-weight:400!important;font-size:13.5px!important;line-height:1.5}
+.consent input{width:18px;height:18px;margin-top:2px;flex:none}
+.note{font-size:13px;color:var(--muted)}
+.msg{grid-column:1/-1;border-radius:10px;padding:12px 14px;background:var(--sky)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+.tbl{overflow-x:auto}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+footer{border-top:1px solid var(--line);padding-block:20px;font-size:13px;color:var(--muted)}
+footer .wrap{display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
+@media (max-width:560px){form.book{grid-template-columns:1fr}}
