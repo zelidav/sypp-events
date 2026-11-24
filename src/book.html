@@ -51,17 +51,17 @@ form.book fieldset .full{grid-column:1/-1}
         <ul id="store_list" role="listbox" aria-label="Matching stores" hidden></ul>
       </div>
       <p class="hint" id="store_status" aria-live="polite"></p>
-      <button type="button" class="linkbtn" id="not_listed">My store isn't listed</button>
+      <label for="lic_search" style="margin-top:12px">Or enter your NY OCM license number</label>
+      <div style="display:flex;gap:8px"><input id="lic_search" type="text" autocomplete="off" placeholder="OCM-CAURD-22-000001" style="flex:1">
+        <button type="button" class="linkbtn" id="lic_go">Look up</button></div>
+      <p class="hint" id="lic_status" aria-live="polite"></p>
     </div>
     <div class="full picked" id="store_picked" hidden>
-      <div><strong id="picked_name"></strong><span id="picked_addr"></span></div>
+      <div><strong id="picked_name"></strong><span id="picked_addr"></span><small id="picked_lic" style="display:block"></small></div>
       <button type="button" class="linkbtn" id="store_change">Change</button>
     </div>
-    <div class="full" id="store_manual" hidden style="display:grid;gap:14px">
-      <label>Store name<input id="store_name" name="store_name" autocomplete="organization"></label>
-      <label>Store address<input id="store_address" name="store_address" autocomplete="street-address" placeholder="Street, city"></label>
-      <button type="button" class="linkbtn" id="back_search">Search the store list instead</button>
-    </div>
+    <input type="hidden" id="store_name" name="store_name"><input type="hidden" id="store_address" name="store_address">
+    <input type="hidden" id="store_license" name="store_license"><input type="hidden" name="form_v" value="2">
   </fieldset>
 
   <fieldset>
@@ -69,7 +69,7 @@ form.book fieldset .full{grid-column:1/-1}
     <label>Your name<input id="contact_name" name="contact_name" autocomplete="name"></label>
     <label>Your role<input id="contact_role" name="contact_role" placeholder="Owner, manager, buyer"></label>
     <label>Email<input id="contact_email" name="contact_email" type="email" autocomplete="email"></label>
-    <label>Mobile number<input id="contact_phone" name="contact_phone" type="tel" autocomplete="tel" placeholder="(555) 555-0100"></label>
+    <label>Phone (mobile if you want text updates)<input id="contact_phone" name="contact_phone" type="tel" autocomplete="tel" placeholder="(555) 555-0100"></label>
   </fieldset>
 
   <fieldset>
@@ -164,21 +164,19 @@ form.book fieldset .full{grid-column:1/-1}
     mode = m;
     $("store_find").hidden = m !== "search";
     $("store_picked").hidden = m !== "picked";
-    $("store_manual").hidden = m !== "manual";
-    $("store_manual").style.display = m === "manual" ? "grid" : "none";
   }
   function closeList() { list.hidden = true; search.setAttribute("aria-expanded", "false"); search.removeAttribute("aria-activedescendant"); active = -1; }
   function render(items, q) {
     list.replaceChildren(); results = items; active = -1;
     if (!items.length) {
       const li = document.createElement("li"); li.className = "empty"; li.setAttribute("role", "option"); li.setAttribute("aria-disabled", "true");
-      li.textContent = "No match for “" + q + "”. Use “My store isn't listed” below.";
+      li.textContent = "No match for “" + q + "”. Try your OCM license number below.";
       list.append(li);
     }
     items.forEach((s, i) => {
       const li = document.createElement("li"); li.id = "store_opt_" + i; li.setAttribute("role", "option"); li.setAttribute("aria-selected", "false");
       const b = document.createElement("span"); b.textContent = s.name || "";
-      const sm = document.createElement("small"); sm.textContent = [s.address, s.city].filter(Boolean).join(", ");
+      const sm = document.createElement("small"); sm.textContent = fullAddr(s);
       li.append(b, sm);
       li.addEventListener("mousedown", e => { e.preventDefault(); pick(i); });
       list.append(li);
@@ -194,16 +192,33 @@ form.book fieldset .full{grid-column:1/-1}
     search.setAttribute("aria-activedescendant", opts[active].id);
     opts[active].scrollIntoView({block: "nearest"});
   }
-  function pick(i) {
-    const s = results[i]; if (!s) return;
+  function fullAddr(s) { return [s.address, s.city, ["NY", s.zip].filter(Boolean).join(" ")].filter(Boolean).join(", "); }
+  function pick(i) { choose(results[i]); }
+  function choose(s) {
+    if (!s) return;
     $("store_key").value = s.key || "";
     $("store_name").value = s.name || "";
-    $("store_address").value = [s.address, s.city].filter(Boolean).join(", ");
+    $("store_address").value = fullAddr(s);
+    $("store_license").value = s.license || "";
     $("picked_name").textContent = s.name || "";
-    $("picked_addr").textContent = [s.address, s.city].filter(Boolean).join(", ");
+    $("picked_addr").textContent = fullAddr(s);
+    $("picked_lic").textContent = "OCM license " + (s.license || "");
     closeList(); showMode("picked"); status.textContent = "";
     $("store_change").focus();
   }
+  async function lookupLicense() {
+    const l = $("lic_search").value.trim(), st = $("lic_status");
+    if (l.length < 6) { st.textContent = "Enter the full license number, like OCM-CAURD-22-000001."; return; }
+    st.textContent = "Looking it up…";
+    try {
+      const r = await fetch(API + "/api/public/license?l=" + encodeURIComponent(l));
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && j.store) { st.textContent = ""; choose(j.store); }
+      else st.textContent = "We couldn't find that license in the state's list. Check the number, or email {{EMAIL}}.";
+    } catch (e) { st.textContent = "License lookup isn't working right now. Try again, or email {{EMAIL}}."; }
+  }
+  $("lic_go").addEventListener("click", lookupLicense);
+  $("lic_search").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); lookupLicense(); } });
   search.addEventListener("input", () => {
     clearTimeout(timer);
     const q = search.value.trim();
@@ -216,7 +231,7 @@ form.book fieldset .full{grid-column:1/-1}
         const j = await r.json();
         if (my === seq) render(Array.isArray(j.results) ? j.results.slice(0, 12) : [], q);
       } catch (e) {
-        if (my === seq) { closeList(); status.textContent = "Store search isn't working right now. Use “My store isn't listed” to type it in."; }
+        if (my === seq) { closeList(); status.textContent = "Store search isn't working right now. Enter your OCM license number below instead."; }
       }
     }, 250);
   });
@@ -228,17 +243,9 @@ form.book fieldset .full{grid-column:1/-1}
     else if (e.key === "Escape") { closeList(); }
   });
   search.addEventListener("blur", () => setTimeout(closeList, 150));
-  $("not_listed").addEventListener("click", () => {
-    $("store_key").value = "";
-    if (!$("store_name").value) $("store_name").value = search.value.trim();
-    closeList(); showMode("manual"); $("store_name").focus();
-  });
   $("store_change").addEventListener("click", () => {
-    $("store_key").value = ""; $("store_name").value = ""; $("store_address").value = "";
-    showMode("search"); search.value = ""; search.focus();
-  });
-  $("back_search").addEventListener("click", () => {
-    $("store_key").value = ""; showMode("search"); search.focus();
+    $("store_key").value = ""; $("store_name").value = ""; $("store_address").value = ""; $("store_license").value = "";
+    showMode("search"); search.value = ""; $("lic_search").value = ""; $("lic_status").textContent = ""; search.focus();
   });
 
   /* ---------- promos ---------- */
@@ -306,17 +313,17 @@ form.book fieldset .full{grid-column:1/-1}
     if ($("website").value) return; // bot
     const v = id => $(id).value.trim();
     const need = [];
-    if (mode === "search") need.push("your store (pick it from the list, or choose “My store isn't listed”)");
-    else { if (!v("store_name")) need.push("store name"); if (!v("store_address")) need.push("store address"); }
+    if (mode !== "picked" || !v("store_license")) need.push("your store (pick it from the list, or look up your OCM license number)");
     if (!v("contact_name")) need.push("your name");
     if (!v("contact_email")) need.push("email");
+    if (!v("contact_phone")) need.push("phone");
     if (!v("date1")) need.push("preferred date");
     if (need.length) { say("Please fill in: " + need.join(", ") + "."); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v("contact_email"))) { say("Please check your email address."); $("contact_email").focus(); return; }
     const today = ymd(addDays(0));
     if (v("date1") < today || (v("date2") && v("date2") < today)) { say("Please pick dates from today onward."); $("date1").focus(); return; }
+    if (v("contact_phone").replace(/\D/g, "").length < 10) { say("Please check your phone number (10 digits)."); $("contact_phone").focus(); return; }
     const sms = $("sms_consent").checked;
-    if (sms && !v("contact_phone")) { say("Add a mobile number for text updates, or uncheck the text box."); $("contact_phone").focus(); return; }
     if (f.querySelector('input[name="promo_id"]:checked')?.value === "other" && !v("promo_other")) { say("Tell us a little about the promotion you have in mind."); $("promo_other").focus(); return; }
     const file = $("logo").files[0];
     if (file && file.size > MAX_LOGO) { say("Your logo is over 5 MB. Please pick a smaller file."); return; }
